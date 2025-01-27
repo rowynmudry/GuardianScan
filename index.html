@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Code Scanner with Database</title>
+  <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    #reader {
+      width: 300px;
+      height: 300px;
+      margin: 20px auto;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>QR Code Scanner</h1>
+  <div id="reader"></div>
+  <div class="result" id="result">Scan a QR code to see the result.</div>
+
+  <script>
+    const html5QrCode = new Html5Qrcode("reader");
+
+    function sendToDatabase(data) {
+      fetch("/save-scan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ qrData: data })
+      })
+      .then(response => response.json())
+      .then(result => {
+        document.getElementById("result").textContent = `Database Response: ${result.message}`;
+      })
+      .catch(error => {
+        console.error("Error saving to database:", error);
+        document.getElementById("result").textContent = "Error saving to database.";
+      });
+    }
+
+    html5QrCode.start({ facingMode: "environment" }, {
+      fps: 10,
+      qrbox: 250
+    }, qrCodeMessage => {
+      document.getElementById("result").textContent = `QR Code Data: ${qrCodeMessage}`;
+      sendToDatabase(qrCodeMessage);
+    })
+    .catch(err => {
+      console.error("Error starting QR Code scanner:", err);
+      document.getElementById("result").textContent = "Failed to start scanner.";
+    });
+  </script>
+</body>
+</html>
